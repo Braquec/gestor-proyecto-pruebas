@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 const DefectosForm = () => {
-  const { prueba } = useParams();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleForm = () => {

@@ -8,7 +8,6 @@ const HitoForm = ({ hito }) => {
   const { id } = useParams();
   const [proyecto, setProyecto] = useState([]);
   const [recurso, setRecurso] = useState([]);
-  const [recursoSeleccionado, setRecursoSeleccionado] = useState([]);
 
   const [formData, setFormData] = useState({
     Descripcion: "",

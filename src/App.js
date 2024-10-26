@@ -13,6 +13,7 @@ import PruebaForm from "./components/PruebaForm";
 import DetalleDefectos from "./components/DetalleDefectos";
 import DefectosForm from "./components/DefectosForm";
 import Dashboard from "./components/Dashboard";
+import Reportes from "./components/Reportes";
 
 function App() {
   return (
@@ -99,6 +100,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reportes"
+            element={
+              <PrivateRoute>
+                <Reportes />
               </PrivateRoute>
             }
           />

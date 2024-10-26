@@ -12,6 +12,7 @@ const DetalleDefectos = () => {
   const [recurso, setRecurso] = useState([]);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [indexDefecto, setIndexDefecto] = useState(false);
+  const [modoEditar, setModoEditar] = useState(null);
   const estados = ["Planificado", "Completado", "En proceso"];
   const [formData, setFormData] = useState({
     Nombre: "",
@@ -19,6 +20,7 @@ const DetalleDefectos = () => {
     Estado: "",
     Resolucion: "",
     Resuelto: "",
+    Tiempo: 0,
   });
 
   const navigate = useNavigate();
@@ -26,10 +28,6 @@ const DetalleDefectos = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const toggleForm = () => {
-    setIsOpen(!isOpen);
   };
 
   const obtenerRecurso = async () => {
@@ -65,6 +63,29 @@ const DetalleDefectos = () => {
     setMostrarConfirmacion(true);
   };
 
+  const handleCrearClick = () => {
+    setIsOpen(true);
+    setModoEditar(false);
+    setFormData({
+      Nombre: "",
+      Propietario: "",
+      Estado: "",
+      Resolucion: "",
+      Resuelto: "",
+      Tiempo: 0,
+    });
+  };
+
+  const handleEditarClick = (defecto, index) => {
+    setIndexDefecto(index);
+    setFormData(defecto);
+    setIsOpen(true);
+    setModoEditar(true);
+    //setPruebaIndexSeleccionado(index); //Establecer index de prueba
+    //setModoEditar(true); // Establecer modo agregar
+    //toggleForm();
+  };
+
   const eliminarDefecto = async () => {
     try {
       await axios.delete(
@@ -73,34 +94,40 @@ const DetalleDefectos = () => {
       obtenerDefectos();
       setMostrarConfirmacion(false);
     } catch (error) {
-      console.error("Error al eliminar el proyecto:", error);
+      console.error("Error al actualizar el defecto:", error);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      //Formateo las fechas ya que vienen en formato mmddyyyy
-      await axios.post(
-        `https://us-central1-my-project-pg-e4715.cloudfunctions.net/app/api/proyectos/${id}/hito/${indexHito}/prueba/${indexPrueba}/defecto`,
-        formData
-      );
-      alert("Defecto agregado con exito");
-      obtenerDefectos();
-      toggleForm();
-      //navigate(`/proyecto/${proyecto.id}`); // Redirige al detalle de proyecto
-    } catch (error) {
-      console.error("Error al enviar el formulario", error);
+    if (modoEditar) {
+      console.log(formData);
+      try {
+        await axios.put(
+          `https://us-central1-my-project-pg-e4715.cloudfunctions.net/app/api/proyectos/${id}/hito/${indexHito}/prueba/${indexPrueba}/defecto/${indexDefecto}`,
+          formData
+        );
+        alert("Defecto modificado");
+        obtenerDefectos();
+        setIsOpen(false);
+      } catch (error) {
+        console.error("Error al actualizar el defecto:", error);
+      }
+    } else {
+      try {
+        await axios.post(
+          `https://us-central1-my-project-pg-e4715.cloudfunctions.net/app/api/proyectos/${id}/hito/${indexHito}/prueba/${indexPrueba}/defecto`,
+          formData
+        );
+        alert("Defecto agregado con exito");
+        obtenerDefectos();
+        setIsOpen(false);
+      } catch (error) {
+        console.error("Error al enviar el formulario", error);
+      }
     }
   };
   useEffect(() => {
-    // Verificar si el token esta en el localStorage
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // Redirigir al login si no hay token
-      navigate("/");
-    }
-
     obtenerDefectos();
     obtenerRecurso();
   }, [navigate]);
@@ -131,7 +158,7 @@ const DetalleDefectos = () => {
           </button>
 
           <button
-            onClick={() => toggleForm()}
+            onClick={() => handleCrearClick()}
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           >
             <svg
@@ -204,11 +231,14 @@ const DetalleDefectos = () => {
                         {def.Estado}
                       </p>
                       <p className="text-gray-700 mb-4">
-                        <b>Resuelto?: </b> {def.Resuelto}
+                        <b>¿Resuelto?: </b> {def.Resuelto}
+                      </p>
+                      <p className="text-gray-700 mb-4">
+                        <b>Tiempo (hrs): </b> {def.Tiempo}
                       </p>
                       <button
                         className="mt-3 bg-green-500 text-white py-2 px-4 rounded"
-                        /*onClick={() => handleEditarClick(prueba, pruebaKey)*/
+                        onClick={() => handleEditarClick(def, defectoKey)}
                       >
                         Editar
                       </button>
@@ -233,14 +263,14 @@ const DetalleDefectos = () => {
       {/* Formulario flotante */}
       <div className="relative">
         {isOpen && (
-          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-10">
+            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl ">
                   Defecto para <b>{prueba?.Nombre}</b>
                 </h2>
                 <button
-                  onClick={toggleForm}
+                  onClick={() => setIsOpen(false)}
                   className="text-gray-500 hover:text-gray-700 focus:outline-none"
                 >
                   <svg
@@ -351,12 +381,25 @@ const DetalleDefectos = () => {
                     </option>
                   </select>
                 </div>
-
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tiempo resolucion (hrs)
+                  </label>
+                  <input
+                    name="Tiempo"
+                    type="number"
+                    min={0}
+                    value={formData.Tiempo}
+                    onChange={handleInputChange}
+                    className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Tiempo (hrs)"
+                  ></input>
+                </div>
                 <button
                   type="submit"
                   className="w-full bg-blue-500 text-white py-2 px-4 rounded-md shadow hover:bg-blue-600 transition duration-300"
                 >
-                  Enviar
+                  {modoEditar ? "Actualizar" : "Crear"}
                 </button>
               </form>
             </div>
